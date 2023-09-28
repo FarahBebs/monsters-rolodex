@@ -34,5 +34,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "3.0.3"
   }
 }
