@@ -1,77 +1,61 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import CardList from './component/card-list/card-list.component';
-import SearchBox from './component/search-box/search-box-component';
+import SearchBox from './component/search-box/search-box-component.tsx';
 import './App.css';
 
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      monsters: [],
-      searchFiled: '',
+const App = () => {
+  const [searchFiled, setSearchField] = useState('');
+  const [monsters, setMonsters] = useState([]);
+  const [filteredMonsters, setFilteredMonsters] = useState(monsters);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        let usersSavedInCache = localStorage.getItem('users');
+        if (usersSavedInCache) {
+          usersSavedInCache = JSON.parse(usersSavedInCache);
+          setMonsters(usersSavedInCache);
+          return;
+        }
+        const res = await fetch('https://jsonplaceholder.typicode.com/users');
+        if (!res.ok) {
+          throw new Error('Not found');
+        }
+        const users = await res.json();
+        localStorage.setItem('users', JSON.stringify(users));
+        setMonsters(users);
+      } catch (err) {
+        console.error(err);
+      }
     };
-  }
-  async componentDidMount() {
-    try {
-      let usersSavedInCache = localStorage.getItem('users');
-      if (usersSavedInCache) {
-        usersSavedInCache = JSON.parse(usersSavedInCache);
-        this.setState(
-          () => {
-            return { monsters: usersSavedInCache };
-          },
-          () => {
-            console.log(this.state);
-          },
-        );
-        return;
-      }
-      const res = await fetch('https://jsonplaceholder.typicode.com/users');
-      if (!res.ok) {
-        throw new Error('NOT found ');
-      }
-      const users = await res.json();
-      localStorage.setItem('users', JSON.stringify(users));
-      this.setState(
-        () => {
-          return { monsters: users };
-        },
-        () => {
-          console.log(this.state);
-        },
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
-  onSearchChange = (e) => {
-    const searchFiled = e.target.value.toLowerCase();
-    this.setState(() => {
-      return {
-        searchFiled,
-      };
-    });
-  };
+    fetchData();
+  }, []);
 
-  render() {
-    const { monsters, searchFiled } = this.state;
-    const { onSearchChange } = this;
-    const filteredMonsters = monsters.filter((monster) => {
+  useEffect(() => {
+    const newfilteredMonsters = monsters.filter((monster) => {
       return monster.name.toLowerCase().includes(searchFiled);
     });
-    return (
-      <div className="App">
-        <h1 className="app-title">Monsters Rolodex</h1>
-        <SearchBox
-          className="search-box-monster"
-          onSearchChangeHandeler={onSearchChange}
-          placeholder="Search Monsters"
-        />
-        <CardList monsters={filteredMonsters} />
-      </div>
-    );
-  }
-}
+    setFilteredMonsters(newfilteredMonsters);
+  }, [monsters, searchFiled]);
+
+  const onSearchChange = (e) => {
+    const searchFiledString = e.target.value.toLowerCase();
+    setSearchField(searchFiledString);
+  };
+  return (
+    <div className="App">
+      <h1 className="app-title">Monsters Rolodex</h1>
+
+      <SearchBox
+        className="search-box-monster"
+        onSearchChangeHandler={onSearchChange}
+        placeholder="Search Monsters"
+      />
+
+      <CardList monsters={filteredMonsters} />
+    </div>
+  );
+};
 
 export default App;
